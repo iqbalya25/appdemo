@@ -1,7 +1,12 @@
-import React from "react";
+import { redirect } from "next/navigation";
 
-export const Home = () => {
-  return <div>Hello World</div>;
+export default function Home() {
+  // Redirect to dashboard or login
+  redirect("/login");
+}
+
+// Add metadata
+export const metadata = {
+  title: 'Smart Warehouse',
+  description: 'Smart Warehouse Management System',
 };
-
-export default Home;

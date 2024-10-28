@@ -1,8 +1,8 @@
 // hooks/useProducts.ts
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import type { Product } from '@/types/Product';
-import { useToast } from './use-toast';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import type { Product } from "@/types/Product";
+import { useToast } from "./use-toast";
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,19 +15,22 @@ export function useProducts() {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8080/api/products', {
-        headers: {
-          'Authorization': `Bearer ${session.user.accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        "https://appdemo-343470541894.asia-southeast2.run.app/api/products",
+        {
+          headers: {
+            Authorization: `Bearer ${session.user.accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to fetch products');
+      if (!response.ok) throw new Error("Failed to fetch products");
 
       const data = await response.json();
       setProducts(data);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
       toast({
         title: "Error",
         description: "Failed to load products",
@@ -43,22 +46,22 @@ export function useProducts() {
 
     try {
       const response = await fetch(`http://localhost:8080/api/products/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${session.user.accessToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.user.accessToken}`,
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error('Failed to delete product');
+      if (!response.ok) throw new Error("Failed to delete product");
 
-      setProducts(products.filter(product => product.id !== id));
+      setProducts(products.filter((product) => product.id !== id));
       toast({
         title: "Success",
         description: "Product deleted successfully",
       });
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error("Error deleting product:", error);
       toast({
         title: "Error",
         description: "Failed to delete product",

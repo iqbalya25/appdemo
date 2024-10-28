@@ -1,24 +1,26 @@
-// app/layout.tsx
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
-
 import "./globals.css";
 import { Providers } from "./session-provider";
+
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Mini E-commerce",
-  description: "A mini e-commerce application"
+  title: {
+    default: "Smart Warehouse",
+    template: "%s | Smart Warehouse",
+  },
+  description: "Smart Warehouse Management System",
 };
 
-interface RootLayoutProps {
+export default function RootLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
         <Providers>
           {children}

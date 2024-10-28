@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-          const res = await fetch("http://localhost:8080/api/auth/login", {
+          const res = await fetch("https://appdemo-343470541894.asia-southeast2.run.app/api/auth/login", {
             method: "POST",
             body: JSON.stringify(credentials),
             headers: { "Content-Type": "application/json" },

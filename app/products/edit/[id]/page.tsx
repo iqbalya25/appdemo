@@ -2,7 +2,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useParams } from "next/navigation";
 
 import { useEffect, useState } from "react";
 
@@ -13,7 +13,7 @@ import { productApi } from "@/lib/api";
 import { ProductForm } from "@/components/product/ProductForm";
 
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage() {
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
@@ -24,17 +24,18 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const params = useParams()
+  const id = params.id as string
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const data = await productApi.getById(parseInt(params.id));
+        const data = await productApi.getById(parseInt(id));
         setProduct(data);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         toast({
           title: "Error",
-          description: "Failed to load product",
+          description: error instanceof Error ? error.message : "Failed to load product",
           variant: "destructive",
         });
       } finally {
@@ -43,7 +44,8 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     };
 
     fetchProduct();
-  }, [params.id]);
+  }, [id]);
+
 
   if (status === "loading" || loading) {
     return (
