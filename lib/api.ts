@@ -4,6 +4,13 @@ import { Category } from "@/types/Category";
 
 type CreateProductData = Omit<Product, "id">;
 
+interface CreateOrderRequest {
+  items: {
+    productId: number;
+    quantity: number;
+  }[];
+}
+
 export const productApi = {
   getAll: () => api.get<Product[]>("/products").then((res) => res.data),
 
@@ -20,6 +27,9 @@ export const productApi = {
     api.put<Product>(`/products/${id}`, data).then((res) => res.data),
 
   delete: (id: number) => api.delete(`/products/${id}`).then((res) => res.data),
+
+  createOrder: (data: CreateOrderRequest) =>
+    api.post("/orders", data).then((res) => res.data),
 };
 
 export const categoryApi = {
