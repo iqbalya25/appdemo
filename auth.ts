@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!res.ok) {
-            return null;
+            throw new Error("Invalid credentials");
           }
 
           const user = await res.json();
@@ -44,6 +44,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
+    error: "/auth/error",
   },
   callbacks: {
     async jwt({ token, user }) {

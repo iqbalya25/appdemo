@@ -1,11 +1,13 @@
+// app/auth/error/page.tsx
 "use client";
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
 
-export default function AuthError() {
+function ErrorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
@@ -19,7 +21,7 @@ export default function AuthError() {
     return () => clearTimeout(timeout);
   }, [router]);
 
-  const getErrorMessage = (error: string) => {
+  const getErrorMessage = (error: string | null) => {
     switch (error) {
       case "Configuration":
         return "There was a problem with the server configuration. Please try again later.";
@@ -37,7 +39,7 @@ export default function AuthError() {
       <Alert variant="destructive">
         <AlertTitle>Authentication Error</AlertTitle>
         <AlertDescription>
-          {error ? getErrorMessage(error) : "An unknown error occurred"}
+          {getErrorMessage(error)}
         </AlertDescription>
       </Alert>
       <div className="mt-4 flex justify-center">
@@ -46,5 +48,22 @@ export default function AuthError() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto max-w-md mt-20 p-4">
+        <Alert>
+          <AlertTitle>Loading</AlertTitle>
+          <AlertDescription>
+            Please wait...
+          </AlertDescription>
+        </Alert>
+      </div>
+    }>
+      <ErrorContent />
+    </Suspense>
   );
 }
