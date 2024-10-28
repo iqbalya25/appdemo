@@ -1,8 +1,8 @@
-// hooks/useProducts.ts
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import type { Product } from "@/types/Product";
 import { useToast } from "./use-toast";
+import { productApi } from "@/lib/api";
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,19 +15,7 @@ export function useProducts() {
 
     try {
       setLoading(true);
-      const response = await fetch(
-        "https://appdemo-343470541894.asia-southeast2.run.app/api/products",
-        {
-          headers: {
-            Authorization: `Bearer ${session.user.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to fetch products");
-
-      const data = await response.json();
+      const data = await productApi.getAll();
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -45,16 +33,7 @@ export function useProducts() {
     if (!session?.user?.accessToken) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${session.user.accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) throw new Error("Failed to delete product");
-
+      await productApi.delete(id);
       setProducts(products.filter((product) => product.id !== id));
       toast({
         title: "Success",
@@ -67,6 +46,7 @@ export function useProducts() {
         description: "Failed to delete product",
         variant: "destructive",
       });
+      throw error; // Rethrow to handle in the component
     }
   };
 
@@ -76,5 +56,5 @@ export function useProducts() {
     }
   }, [session?.user?.accessToken]);
 
-  return { products, loading, deleteProduct };
+  return { products, loading, deleteProduct, fetchProducts };
 }
