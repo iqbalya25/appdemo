@@ -1,7 +1,6 @@
 // app/products/create/page.tsx
 "use client";
 
-import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { redirect, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";

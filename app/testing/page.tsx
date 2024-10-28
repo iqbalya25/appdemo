@@ -16,7 +16,8 @@ import { BarcodeScanner } from "@/components/product/BarcodeScanner";
 import { productApi } from "@/lib/api";
 import { Loader2, AlertCircle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AxiosError } from "axios"; // Add this import
+
+import { AxiosError } from "axios";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -26,19 +27,10 @@ import { AlertDialogHeader } from "@/components/ui/alert-dialog";
 
 export default function BarcodeTestPage() {
   const router = useRouter();
-  const [scanning, setScanning] = useState(false);
-  const [testBarcode, setTestBarcode] = useState("");
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const { toast } = useToast();
-
-  const generateNewTestBarcode = () => {
-    const randomNum = Math.floor(Math.random() * 1000000000000)
-      .toString()
-      .padStart(12, "0");
-    setTestBarcode(randomNum);
-  };
 
   const handleScan = async (barcode: string) => {
     try {
