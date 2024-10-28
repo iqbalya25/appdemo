@@ -57,10 +57,10 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   initialData?: Product;
+  initialBarcode?: string | null;
 }
-
-export function ProductForm({ initialData }: ProductFormProps) {
-  const { data: session} = useSession();
+export function ProductForm({ initialData, initialBarcode }: ProductFormProps) {
+  const { data: session } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   const { categories } = useCategories();
@@ -76,8 +76,8 @@ export function ProductForm({ initialData }: ProductFormProps) {
       description: initialData?.description || "",
       price: initialData?.price ? initialData.price.toString() : "",
       categoryId: initialData?.categoryId?.toString() || "",
-      barcode: initialData?.barcode || "",
-      imageUrl: initialData?.imageUrl || "",
+      barcode: initialBarcode || initialData?.barcode || "",
+      imageUrl: initialData?.imageUrl || null,
       isActive: initialData?.isActive ?? true,
     },
   });
@@ -157,7 +157,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
     try {
       // Try to find existing product
       const existingProduct = await productApi.getByBarcode(barcode);
-      
+
       if (existingProduct) {
         toast({
           title: "Product Found",
@@ -166,11 +166,10 @@ export function ProductForm({ initialData }: ProductFormProps) {
         });
         return;
       }
-  
+
       // If no existing product, set the barcode in the form
       form.setValue("barcode", barcode);
       setCurrentBarcode(barcode);
-      
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         // Product not found - set barcode in form
@@ -181,7 +180,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
           description: "No existing product found. You can add it as new.",
         });
       } else {
-        console.error('Error scanning barcode:', error);
+        console.error("Error scanning barcode:", error);
         toast({
           title: "Error",
           description: "Failed to process barcode scan",
@@ -314,7 +313,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
                   <FormField
                     control={form.control}
                     name="imageUrl"
-                    render={({ }) => (
+                    render={({}) => (
                       <FormItem>
                         <FormLabel>Product Image</FormLabel>
                         <FormControl>
@@ -458,7 +457,7 @@ export function ProductForm({ initialData }: ProductFormProps) {
                       <FormField
                         control={form.control}
                         name="imageUrl"
-                        render={({ }) => (
+                        render={({}) => (
                           <FormItem>
                             <FormLabel>Product Image</FormLabel>
                             <FormControl>

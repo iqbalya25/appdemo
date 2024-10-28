@@ -1,8 +1,9 @@
+// app/products/create/page.tsx
 "use client";
 
+import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-
+import { redirect, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ProductForm } from "@/components/product/ProductForm";
 
@@ -13,6 +14,9 @@ export default function CreateProductPage() {
       redirect("/login");
     },
   });
+
+  const searchParams = useSearchParams();
+  const barcode = searchParams.get('barcode');
 
   if (status === "loading") {
     return (
@@ -28,7 +32,7 @@ export default function CreateProductPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <ProductForm />
+      <ProductForm initialBarcode={barcode} />
     </div>
   );
 }
