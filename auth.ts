@@ -1,4 +1,3 @@
-// auth.ts
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
@@ -19,11 +18,11 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!res.ok) {
-            throw new Error("Authentication failed");
+            throw new Error("Invalid credentials");
           }
 
           const user = await res.json();
-
+          
           if (user) {
             return {
               id: user.id,
@@ -33,14 +32,19 @@ export const authOptions: NextAuthOptions = {
               accessToken: user.token,
             };
           }
+          
           return null;
         } catch (error) {
           console.error("Auth error:", error);
-          return null;
+          throw new Error("Authentication failed");
         }
       },
     }),
   ],
+  pages: {
+    signIn: "/login",
+    error: "/auth/error",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -58,9 +62,6 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-  },
-  pages: {
-    signIn: "/login",
   },
   session: {
     strategy: "jwt",
