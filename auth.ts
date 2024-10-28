@@ -12,18 +12,21 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-          const res = await fetch("https://appdemo-343470541894.asia-southeast2.run.app/api/auth/login", {
-            method: "POST",
-            body: JSON.stringify(credentials),
-            headers: { "Content-Type": "application/json" },
-          });
+          const res = await fetch(
+            "https://appdemo-343470541894.asia-southeast2.run.app/api/auth/login",
+            {
+              method: "POST",
+              body: JSON.stringify(credentials),
+              headers: { "Content-Type": "application/json" },
+            }
+          );
 
           if (!res.ok) {
             throw new Error("Invalid credentials");
           }
 
           const user = await res.json();
-          
+
           if (user) {
             return {
               id: user.id,
@@ -33,7 +36,7 @@ export const authOptions: NextAuthOptions = {
               accessToken: user.token,
             };
           }
-          
+
           return null;
         } catch (error) {
           console.error("Auth error:", error);
