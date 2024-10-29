@@ -4,15 +4,14 @@ import "./globals.css";
 import { Providers } from "./session-provider";
 import MainNav from "@/components/navigation/MainNav";
 
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: {
-    default: "Smart Warehouse",
-    template: "%s | Smart Warehouse",
+    default: "Cashier App",
+    template: "%s | Cashier App",
   },
-  description: "Smart Warehouse Management System",
+  description: "Cashier App System",
 };
 
 export default function RootLayout({

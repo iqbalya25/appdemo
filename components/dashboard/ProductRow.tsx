@@ -24,7 +24,7 @@ export const ProductRow: React.FC<ProductRowProps> = ({
       </TableCell>
       <TableCell className="font-medium">{product.name}</TableCell>
       <TableCell>{product.category?.name || "N/A"}</TableCell>
-      <TableCell>${product.price.toFixed(2)}</TableCell>
+      <TableCell>Rp. {product.price.toLocaleString("id-ID")}</TableCell>
       {isAdmin && (
         <TableCell className="text-right space-x-2">
           <Link href={`/products/edit/${product.id}`}>

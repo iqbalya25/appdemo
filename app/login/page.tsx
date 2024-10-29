@@ -1,69 +1,85 @@
-// app/login/page.tsx
-"use client";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Eye, EyeOff } from "lucide-react";
-import { cn } from "@/lib/utils";
+'use client'
+
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter()
+  const { data: session, status } = useSession()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isInitializing, setIsInitializing] = useState(true)
+
+  useEffect(() => {
+    // Handle initial redirect based on session
+    if (status === 'authenticated' && session?.user?.role) {
+      switch (session.user.role) {
+        case 'ADMIN':
+          router.push('/dashboard')
+          break
+        case 'CASHIER':
+          router.push('/cashier')
+          break
+        default:
+          router.push('/')
+      }
+    } else if (status !== 'loading') {
+      // Only show login form when we're sure there's no session
+      setIsInitializing(false)
+    }
+  }, [status, session, router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(e.currentTarget)
 
     try {
-      const result = await signIn("credentials", {
-        username: formData.get("username"),
-        password: formData.get("password"),
+      const result = await signIn('credentials', {
+        username: formData.get('username'),
+        password: formData.get('password'),
         redirect: false,
-      });
+      })
 
       if (result?.error) {
-        setError("Invalid username or password");
-        return;
+        setError(result.error)
+        return
       }
 
-      // Fetch the session to get the user role
-      const session = await fetch("/api/auth/session").then((res) =>
-        res.json()
-      );
-
-      // Redirect based on role
-      if (session?.user?.role === "CASHIER") {
-        router.push("/cashier");
-      } else if (session?.user?.role === "ADMIN") {
-        router.push("/dashboard");
-      } else {
-        router.push("/dashboard"); // Default fallback
-      }
-
-      router.refresh();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // Successful login will trigger the useEffect above
     } catch (error) {
-      setError("Something went wrong");
+      console.error('Login error:', error);  // Log the error for debugging
+      setError('Something went wrong');
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
+  // Show loading state when checking session or redirecting
+  if (isInitializing || status === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-100">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Only show login form when not authenticated
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <Card className="w-[400px]">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
-            Login
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,47 +88,24 @@ export default function LoginPage() {
                 name="username"
                 placeholder="Username"
                 required
-                autoComplete="username"
-                className="w-full"
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
-              <div className="relative">
-                <Input
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  required
-                  autoComplete="current-password"
-                  className="w-full pr-10" // Add padding for the eye icon
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-500" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-500" />
-                  )}
-                  <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
-                  </span>
-                </Button>
-              </div>
+              <Input
+                name="password"
+                type="password"
+                placeholder="Password"
+                required
+                disabled={loading}
+              />
             </div>
             {error && (
-              <div className="text-sm text-red-500 font-medium">{error}</div>
+              <p className="text-sm text-red-500">{error}</p>
             )}
             <Button
               type="submit"
-              className={cn(
-                "w-full",
-                loading && "cursor-not-allowed opacity-50"
-              )}
+              className="w-full"
               disabled={loading}
             >
               {loading ? (
@@ -121,7 +114,7 @@ export default function LoginPage() {
                   Signing in...
                 </>
               ) : (
-                "Sign in"
+                'Sign in'
               )}
             </Button>
           </form>
