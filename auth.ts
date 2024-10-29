@@ -66,6 +66,29 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Check for custom callback URL in the signin page query parameters
+      if (url.startsWith("/login") && url.includes("callbackUrl")) {
+        const params = new URLSearchParams(url.split("?")[1]);
+        const callbackUrl = params.get("callbackUrl");
+        if (callbackUrl) return callbackUrl;
+      }
+
+      // Handle role-based redirects
+      if (url === baseUrl) {
+        const session = await fetch(`${baseUrl}/api/auth/session`).then(res => res.json());
+        if (session?.user?.role === "CASHIER") {
+          return `${baseUrl}/cashier`;
+        } else if (session?.user?.role === "ADMIN") {
+          return `${baseUrl}/dashboard`;
+        }
+      }
+
+      // Default redirect behavior
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
   session: {
     strategy: "jwt",

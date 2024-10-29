@@ -1,64 +1,40 @@
+// app/cashier/page.tsx (continued)
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Search, LogOut, Loader2, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { signOut } from 'next-auth/react';
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import {
-  Search,
-  ShoppingCart,
-  Plus,
-  Minus,
-  Trash2,
-  CreditCard,
-  Loader2,
-  Menu,
-  LogOut
-} from 'lucide-react';
-import Image from 'next/image';
-import { productApi, categoryApi } from '@/lib/api';
 import { Product } from '@/types/Product';
 import { Category } from '@/types/Category';
+import { productApi, categoryApi } from '@/lib/api';
+import { CartContent } from '@/components/cashier/CartContent';
+import { CategoryList } from '@/components/cashier/CategoryList';
+import { ProductCard } from '@/components/cashier/ProductCard';
+import { HeaderMobile } from '@/components/cashier/HeaderMobile';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import debounce from 'lodash/debounce';
-
-interface CartItem {
-  productId: number;
-  name: string;
-  price: number;
-  quantity: number;
-  subtotal: number;
-}
-
-// Hook to detect mobile viewport
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  return isMobile;
-}
+import { CartItem } from '@/types/CartItem';
+import useIsMobile from '@/hooks/useIsMobile';
 
 export default function CashierPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect('/login');
+    },
+  });
+  
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -72,16 +48,7 @@ export default function CashierPage() {
 
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-  // Handle authentication and role-based access
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    } else if (status === "authenticated" && session?.user?.role !== "CASHIER") {
-      router.push("/login");
-    }
-  }, [session, status, router]);
-
-  // Fetch initial data
+  // Initialize data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -94,11 +61,11 @@ export default function CashierPage() {
         setProducts(productsData);
         setFilteredProducts(productsData);
         setCategories(categoriesData);
-      } catch (err: unknown) {
-        const error = err as Error;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
         toast({
           title: "Error",
-          description: error.message || "Failed to load data",
+          description: "Failed to load initial data",
           variant: "destructive"
         });
       } finally {
@@ -111,8 +78,8 @@ export default function CashierPage() {
     }
   }, [session, toast]);
 
-  // Handle search and filtering
-  const performSearch = debounce((searchTerm: string) => {
+  // Filter products based on search and category
+  useEffect(() => {
     let filtered = products;
     
     if (selectedCategory) {
@@ -121,8 +88,8 @@ export default function CashierPage() {
       );
     }
     
-    if (searchTerm) {
-      const lowercaseSearch = searchTerm.toLowerCase();
+    if (searchQuery) {
+      const lowercaseSearch = searchQuery.toLowerCase();
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(lowercaseSearch) ||
         product.description?.toLowerCase().includes(lowercaseSearch) ||
@@ -131,15 +98,11 @@ export default function CashierPage() {
     }
     
     setFilteredProducts(filtered);
-  }, 300);
-
-  useEffect(() => {
-    performSearch(searchQuery);
   }, [searchQuery, selectedCategory, products]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-  };
+  }, 300);
 
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' });
@@ -222,11 +185,11 @@ export default function CashierPage() {
 
       setCart([]);
       setIsMobileCartOpen(false);
-    } catch (err: unknown) {
-      const error = err as Error;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to process payment",
+        description: "Failed to process payment",
         variant: "destructive"
       });
     } finally {
@@ -242,167 +205,30 @@ export default function CashierPage() {
     );
   }
 
-  const CartContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto">
-        <div className="space-y-4">
-          {cart.map(item => (
-            <div key={item.productId} className="flex items-center justify-between">
-              <div className="flex-1">
-                <h4 className="font-medium">{item.name}</h4>
-                <p className="text-sm text-muted-foreground">
-                  Rp. {item.price.toLocaleString()} x {item.quantity}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateQuantity(item.productId, -1);
-                  }}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-8 text-center">{item.quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateQuantity(item.productId, 1);
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateQuantity(item.productId, -item.quantity);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="pt-4 space-y-4 border-t mt-4">
-        <div className="flex justify-between text-lg font-semibold">
-          <span>Total</span>
-          <span>Rp. {total.toLocaleString()}</span>
-        </div>
-        <Button 
-          className="w-full h-12"
-          onClick={handlePayment}
-          disabled={processingPayment || cart.length === 0}
-        >
-          {processingPayment ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <CreditCard className="mr-2 h-5 w-5" />
-              Pay Now
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-        <Sheet open={isMobileCategoriesOpen} onOpenChange={setIsMobileCategoriesOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-            <div className="py-4">
-              <h2 className="text-lg font-semibold mb-4">Categories</h2>
-              <div className="space-y-2">
-                <Button
-                  variant={selectedCategory === null ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setIsMobileCategoriesOpen(false);
-                  }}
-                >
-                  All Products
-                </Button>
-                {categories.map(category => (
-                  <Button
-                    key={category.id}
-                    variant={selectedCategory === category.id ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setSelectedCategory(category.id);
-                      setIsMobileCategoriesOpen(false);
-                    }}
-                  >
-                    {category.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
+      <HeaderMobile
+        isMobileCategoriesOpen={isMobileCategoriesOpen}
+        setIsMobileCategoriesOpen={setIsMobileCategoriesOpen}
+        isMobileCartOpen={isMobileCartOpen}
+        setIsMobileCartOpen={setIsMobileCartOpen}
+        cart={cart}
+        onLogout={handleLogout}
+      />
 
-        <h1 className="text-lg font-semibold">Cashier</h1>
-
-        <div className="flex items-center gap-2">
-          <Sheet open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                    {cart.length}
-                  </span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <div className="py-4 h-full">
-                <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
-                <CartContent />
-              </div>
-            </SheetContent>
-          </Sheet>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Categories - Desktop */}
-      <Card className="hidden md:block w-64 flex-shrink-0 m-4 h-[calc(100vh-2rem)]">
-        <CardHeader>
-          <CardTitle>Categories</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[calc(100vh-12rem)]">
+      {/* Mobile Categories Menu */}
+      <Sheet open={isMobileCategoriesOpen} onOpenChange={setIsMobileCategoriesOpen}>
+        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+          <div className="py-4">
+            <h2 className="text-lg font-semibold mb-4">Categories</h2>
             <div className="space-y-2">
               <Button
                 variant={selectedCategory === null ? "default" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => setSelectedCategory(null)}
+                onClick={() => {
+                  setSelectedCategory(null);
+                  setIsMobileCategoriesOpen(false);
+                }}
               >
                 All Products
               </Button>
@@ -411,17 +237,27 @@ export default function CashierPage() {
                   key={category.id}
                   variant={selectedCategory === category.id ? "default" : "ghost"}
                   className="w-full justify-start"
-                  onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    setIsMobileCategoriesOpen(false);
+                  }}
                 >
                   {category.name}
                 </Button>
               ))}
             </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-      
-      {/* Products */}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Categories */}
+      <CategoryList
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
+
+      {/* Products Section */}
       <div className="flex-1 p-4">
         <Card className="h-[calc(100vh-2rem)]">
           <CardHeader>
@@ -441,7 +277,6 @@ export default function CashierPage() {
               <Input
                 placeholder="Search products..."
                 className="pl-8"
-                value={searchQuery}
                 onChange={handleSearch}
               />
             </div>
@@ -450,32 +285,11 @@ export default function CashierPage() {
             <ScrollArea className="h-[calc(100vh-16rem)]">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredProducts.map(product => (
-                  <Card 
-                    key={product.id} 
-                    className="cursor-pointer hover:bg-accent transition-colors"
+                  <ProductCard
+                    key={product.id}
+                    product={product}
                     onClick={() => handleAddToCart(product)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="aspect-square relative mb-2">
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.name}
-                            fill
-                            className="rounded-md object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-secondary rounded-md flex items-center justify-center">
-                            No image
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="font-medium">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Rp. {product.price.toLocaleString()}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  />
                 ))}
               </div>
             </ScrollArea>
@@ -483,7 +297,23 @@ export default function CashierPage() {
         </Card>
       </div>
 
-      {/* Cart - Desktop */}
+      {/* Mobile Cart */}
+      <Sheet open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen}>
+        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+          <div className="py-4 h-full">
+            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            <CartContent
+              cart={cart}
+              total={total}
+              onUpdateQuantity={handleUpdateQuantity}
+              onPayment={handlePayment}
+              processingPayment={processingPayment}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Cart */}
       <Card className="hidden md:block w-96 flex-shrink-0 m-4 h-[calc(100vh-2rem)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -493,7 +323,13 @@ export default function CashierPage() {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[calc(100vh-20rem)]">
-            <CartContent />
+            <CartContent
+              cart={cart}
+              total={total}
+              onUpdateQuantity={handleUpdateQuantity}
+              onPayment={handlePayment}
+              processingPayment={processingPayment}
+            />
           </ScrollArea>
         </CardContent>
       </Card>
