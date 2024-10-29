@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetTrigger} from "@/components/ui/sheet";
+import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { CartItem } from "@/types/CartItem";
-import { Menu, ShoppingCart, LogOut } from "lucide-react";
-
+import { Menu, ShoppingCart } from "lucide-react";
 
 interface HeaderMobileProps {
   isMobileCategoriesOpen: boolean;
@@ -10,7 +9,6 @@ interface HeaderMobileProps {
   isMobileCartOpen: boolean;
   setIsMobileCartOpen: (open: boolean) => void;
   cart: CartItem[];
-  onLogout: () => void;
 }
 
 export function HeaderMobile({
@@ -19,11 +17,13 @@ export function HeaderMobile({
   isMobileCartOpen,
   setIsMobileCartOpen,
   cart,
-  onLogout,
 }: HeaderMobileProps) {
   return (
     <div className="md:hidden flex items-center justify-between p-4 bg-white border-b">
-      <Sheet open={isMobileCategoriesOpen} onOpenChange={setIsMobileCategoriesOpen}>
+      <Sheet
+        open={isMobileCategoriesOpen}
+        onOpenChange={setIsMobileCategoriesOpen}
+      >
         <SheetTrigger asChild>
           <Button variant="outline" size="icon">
             <Menu className="h-5 w-5" />
@@ -46,9 +46,6 @@ export function HeaderMobile({
             </Button>
           </SheetTrigger>
         </Sheet>
-        <Button variant="outline" size="icon" onClick={onLogout}>
-          <LogOut className="h-5 w-5" />
-        </Button>
       </div>
     </div>
   );

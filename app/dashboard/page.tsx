@@ -5,8 +5,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
-import { Package, LogOut, Plus, Loader2 } from "lucide-react";
+import { Package, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { UserInfo } from "@/components/dashboard/UserInfo";
 import { useProducts } from "@/hooks/useProduct";
@@ -42,10 +41,6 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <Button variant="outline" onClick={() => signOut({ callbackUrl: "/login" })}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
         </div>
 
         <UserInfo user={session.user} />

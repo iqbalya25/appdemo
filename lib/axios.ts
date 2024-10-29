@@ -3,24 +3,25 @@ import axios from "axios";
 import { getSession } from "next-auth/react";
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  
-  api.interceptors.request.use(
-    async (config) => {
-      const session = await getSession();
-      if (session?.user?.accessToken) {
-        config.headers.Authorization = `Bearer ${session.user.accessToken}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+api.interceptors.request.use(
+  async (config) => {
+    const session = await getSession();
+    if (session?.user?.accessToken) {
+      config.headers.Authorization = `Bearer ${session.user.accessToken}`;
+      console.log("Request headers:", config.headers); // Debug headers
     }
-  );
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Add a response interceptor
 api.interceptors.response.use(

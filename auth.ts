@@ -76,11 +76,16 @@ export const authOptions: NextAuthOptions = {
 
       // Handle role-based redirects
       if (url === baseUrl) {
-        const session = await fetch(`${baseUrl}/api/auth/session`).then(res => res.json());
-        if (session?.user?.role === "CASHIER") {
-          return `${baseUrl}/cashier`;
-        } else if (session?.user?.role === "ADMIN") {
-          return `${baseUrl}/dashboard`;
+        try {
+          const session = await fetch(`${baseUrl}/api/auth/session`).then(res => res.json());
+          if (session?.user?.role === "CASHIER") {
+            return `${baseUrl}/cashier`;
+          } else if (session?.user?.role === "ADMIN") {
+            return `${baseUrl}/dashboard`;
+          }
+        } catch (error) {
+          console.error('Error fetching session:', error);
+          return baseUrl;
         }
       }
 

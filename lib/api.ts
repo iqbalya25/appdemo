@@ -2,6 +2,7 @@
 import { Product } from "@/types/Product";
 import api from "./axios";
 import { Category } from "@/types/Category";
+import { Order } from "@/types/order";
 
 type CreateProductData = Omit<Product, "id">;
 
@@ -58,4 +59,8 @@ export const productApi: ProductApiInterface = {
 
 export const categoryApi: CategoryApiInterface = {
   getAll: () => api.get<Category[]>("/categories").then((res) => res.data),
+};
+
+export const orderApi = {
+  getAll: () => api.get<Order[]>("/orders").then((res) => res.data),
 };
